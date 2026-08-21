@@ -31,7 +31,7 @@ In ReVanced Manager, open the **Patches** tab, choose the add-source option, sel
 
 `https://raw.githubusercontent.com/Deadly-Bytes/redflagdeals-revanced-patches/main/patches.json`
 
-This URL is a ReVanced source manifest at the repository root. Manager reads it and downloads the published `.rvp` bundle; it is not an APK download. The current manifest resolves to the immutable `v1.0.0` release asset.
+This URL is the ReVanced-compatible patch metadata file at the repository root. It describes the patch name, supported package and supported app version in the format used by ReVanced patch repositories. The `.rvp` bundle remains available from Releases.
 
 Then select a legally obtained, unmodified RedFlagDeals Forums `1.11.7` APK from storage, enable `Fix RedFlagDeals Forums`, patch, and install the result.
 

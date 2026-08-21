@@ -25,6 +25,18 @@ Safe runtime diagnostics use the `RFDSession` log tag. They report endpoint name
 
 ## Install with ReVanced Manager
 
+### Add this repository by URL
+
+In ReVanced Manager, open the **Patches** tab, choose the add-source option, select **Enter URL**, and paste:
+
+`https://raw.githubusercontent.com/Deadly-Bytes/redflagdeals-revanced-patches/main/patches.json`
+
+This URL is a ReVanced source manifest at the repository root. Manager reads it and downloads the published `.rvp` bundle; it is not an APK download. The current manifest resolves to the immutable `v1.0.0` release asset.
+
+Then select a legally obtained, unmodified RedFlagDeals Forums `1.11.7` APK from storage, enable `Fix RedFlagDeals Forums`, patch, and install the result.
+
+### Add a local bundle instead
+
 1. Download the `.rvp` patch bundle from this repository's Releases page.
 2. Add the downloaded bundle as a local patch bundle in ReVanced Manager.
 3. Select a legally obtained, unmodified RedFlagDeals Forums `1.11.7` APK from storage.

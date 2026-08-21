@@ -29,9 +29,9 @@ Safe runtime diagnostics use the `RFDSession` log tag. They report endpoint name
 
 In ReVanced Manager, open the **Patches** tab, choose the add-source option, select **Enter URL**, and paste:
 
-`https://raw.githubusercontent.com/Deadly-Bytes/redflagdeals-revanced-patches/main/patches.json`
+`https://raw.githubusercontent.com/Deadly-Bytes/redflagdeals-revanced-patches/main/source.json`
 
-This URL is the ReVanced-compatible patch metadata file at the repository root. It describes the patch name, supported package and supported app version in the format used by ReVanced patch repositories. The `.rvp` bundle remains available from Releases.
+This root-level source descriptor tells ReVanced Manager where to download the released `.rvp` bundle. The repository also publishes `patches.json`, a catalogue describing the patch name, supported package, and supported app version; that catalogue is not the URL to enter in Manager's add-source dialog.
 
 Then select a legally obtained, unmodified RedFlagDeals Forums `1.11.7` APK from storage, enable `Fix RedFlagDeals Forums`, patch, and install the result.
 

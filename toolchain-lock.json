@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "java": {
+    "distribution": "Eclipse Temurin",
+    "version": "21.0.6+7"
+  },
+  "android": {
+    "sdkBuildTools": "36.0.0",
+    "extensionCompileSdk": 34,
+    "extensionBytecodeTarget": 17
+  },
+  "gradle": {
+    "version": "9.3.1",
+    "distributionSha256": "b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06"
+  },
+  "revancedTemplate": {
+    "branch": "dev",
+    "commit": "9abc54a4ea849f1ba38c33ea1fd141bc87125d86"
+  },
+  "revancedGradlePlugin": {
+    "version": "1.0.0-dev.10",
+    "commit": "7bdf4324e1ad394cd33f8b77e1c166b5257bbbd5",
+    "vendored": true
+  },
+  "revancedPatcher": {
+    "version": "22.0.0",
+    "commit": "2b892baf87c49de1de1720ab7440c636fab19854",
+    "providedBy": "revanced-cli-6.0.0-all.jar"
+  },
+  "revancedCli": {
+    "version": "6.0.0",
+    "url": "https://github.com/ReVanced/revanced-cli/releases/download/v6.0.0/revanced-cli-6.0.0-all.jar",
+    "sha256": "c25549bc17d59d2eb94fa5f86e60e9b77a02772ca88f7050f8f1276f923a9958"
+  },
+  "apktool": {
+    "version": "3.0.3",
+    "url": "https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar",
+    "sha256": "dbf930b076c6b9be08d57c449cacefc3bdd6b71ebd59b3066fc0e1f5b14f9423"
+  },
+  "kotlin": "2.3.10",
+  "androidGradlePlugin": "9.0.1",
+  "smali": "3.0.5"
+}

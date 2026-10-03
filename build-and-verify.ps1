@@ -131,9 +131,25 @@ $yidAdapter = Get-SingleDecodedClass 'YidAdapter.smali'
 $yidListener = Get-SingleDecodedClass 'YidAdapter$1.smali'
 $accountManager = Get-SingleDecodedClass 'YidAccountManager.smali'
 $topicFragment = Get-SingleDecodedClass 'TopicFragment.smali'
+$topicActivity = Get-SingleDecodedClass 'TopicActivity.smali'
 $refreshListener = Get-SingleDecodedClass 'TopicFragment$onRefresh$1.smali'
 $topicListAdapter = Get-SingleDecodedClass 'TopicListAdapter.smali'
 $diagnostics = Get-SingleDecodedClass 'Diagnostics.smali'
+$replyBinding = Get-SingleDecodedClass 'PostItemBindingImpl.smali'
+$replyVoting = Get-SingleDecodedClass 'ReplyVoting.smali'
+
+Assert-Contains $replyBinding 'ReplyVoting;->bind(Ljava/lang/Object;)V'
+Assert-Contains $replyVoting '"onVoteDown"'
+Assert-Contains $replyVoting '"getVoteViewModel"'
+Assert-Contains $replyVoting '"ic_thumb_down_outline"'
+Assert-Contains $replyVoting '"vote_active"'
+$replyBindingText = Get-Content -LiteralPath $replyBinding -Raw
+$replyBindMethod = [regex]::Match($replyBindingText, '(?s)\.method protected executeBindings\(\)V.*?\.end method').Value
+$replyHookPattern = 'invoke-static/range \{p0 \.\. p0\}, Lapp/revanced/extension/redflagdeals/ReplyVoting;->bind\(Ljava/lang/Object;\)V\s+return-void'
+if ([regex]::Matches($replyBindMethod, $replyHookPattern).Count -ne 1 -or
+    [regex]::Matches($replyBindMethod, '(?m)^\s*return-void\s*$').Count -ne 1) {
+    throw 'Reply vote hook must run at the single binding return using the high-register-safe invoke form.'
+}
 
 Assert-Contains $diagnostics 'RFDLoginFix-20260820-4'
 Assert-Contains $yidAdapter '^phpbb3_([a-z0-9-]+)_sid=([a-zA-Z0-9,-]+);?.*'
@@ -144,6 +160,14 @@ Assert-Contains $topicFragment 'hideQuickReply'
 Assert-Contains $topicFragment 'isReplyAllowed'
 Assert-Contains $topicFragment '->onRefresh()V'
 Assert-NotContains $topicFragment 'LogoutDialog'
+Assert-Contains $topicActivity '->getMTopic$rfd_forums_productionRelease()Lcom/ypg/rfdapilib/forums/model/Topic;'
+$activityText = Get-Content -LiteralPath $topicActivity -Raw
+$backResult = [regex]::Match($activityText, '(?s)\.method public onBackPressed\(\)V.*?\.end method').Value
+$syncIndex = $backResult.IndexOf('iput-object v0, p0, Lcom/ypg/rfdforums/sections/topic/TopicActivity;->topic:', [StringComparison]::Ordinal)
+$readIndex = $backResult.IndexOf('iget-object v1, p0, Lcom/ypg/rfdforums/sections/topic/TopicActivity;->topic:', [StringComparison]::Ordinal)
+if ($syncIndex -lt 0 -or $readIndex -le $syncIndex) {
+    throw 'Topic back result does not synchronize the current fragment model before returning it.'
+}
 Assert-Contains $refreshListener 'logExactRefreshFailed'
 Assert-Contains $refreshListener '->setupQuickReplyUI()V'
 Assert-NotContains $refreshListener 'HomeRoute;->go'
@@ -201,9 +225,9 @@ if ($archivedBundleHash -ne $bundleHash) {
     throw "Archived patch bundle hash mismatch."
 }
 
-$repoRoot = (Resolve-Path (Join-Path $projectRoot '..')).Path
+$repoRoot = $projectRoot
 $sourceCommit = (git -C $repoRoot rev-parse HEAD).Trim()
-$sourceDirty = [bool](git -C $repoRoot status --porcelain -- 'Stage2-ReVanced')
+$sourceDirty = [bool](git -C $repoRoot status --porcelain)
 $manifest = [ordered]@{
     schemaVersion = 1
     createdUtc = [DateTime]::UtcNow.ToString('o')

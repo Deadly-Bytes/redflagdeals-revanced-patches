@@ -12,6 +12,7 @@ import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.BuilderOffsetInstruction
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction10t
+import com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction
 
 private const val TOPIC_FRAGMENT = "Lcom/ypg/rfdforums/sections/topic/TopicFragment;"
 private const val TOPIC_REFRESH_LISTENER =
@@ -25,6 +26,49 @@ internal fun BytecodePatchContext.applyTopicFixes() {
     keepReplyHiddenDuringRefresh()
     preserveThreadOnRefreshFailure()
     rebuildReplyUiAfterExactSuccess()
+    returnCurrentTopicToList()
+}
+
+// A refresh replaces the fragment's Topic, but the activity retains its initial parcel.
+// Return the displayed fragment's current model so read/vote changes reach the list.
+private fun BytecodePatchContext.returnCurrentTopicToList() {
+    val activity = "Lcom/ypg/rfdforums/sections/topic/TopicActivity;"
+    val getter = "getMTopic${'$'}rfd_forums_productionRelease"
+    requireSingleMethod("Current topic getter", TOPIC_FRAGMENT, getter, TOPIC)
+    val back = requireSingleMethod("Topic back result", activity, "onBackPressed", "V")
+    val instructions = back.implementation!!.instructions
+    if (back.implementation!!.registerCount != 4 ||
+        instructions.count { it.fieldReference?.toString() == "$activity->topic:$TOPIC" } != 1 ||
+        instructions.count {
+            it.methodReference?.toString() ==
+                "$activity->setResult(ILandroid/content/Intent;)V"
+        } != 1 ||
+        instructions.count {
+            (it as? NarrowLiteralInstruction)?.narrowLiteral == 0x7f0900e0
+        } != 1 ||
+        instructions.any { it.methodReference?.name == getter }
+    ) {
+        throw PatchException("Topic back-result stock fingerprint did not match")
+    }
+    back.addInstructions(
+        0,
+        """
+            invoke-virtual { p0 }, $activity->getSupportFragmentManager()Landroidx/fragment/app/FragmentManager;
+            move-result-object v0
+            const v1, 0x7f0900e0
+            invoke-virtual { v0, v1 }, Landroidx/fragment/app/FragmentManager;->findFragmentById(I)Landroidx/fragment/app/Fragment;
+            move-result-object v0
+            instance-of v1, v0, $TOPIC_FRAGMENT
+            if-eqz v1, :original_back
+            check-cast v0, $TOPIC_FRAGMENT
+            invoke-virtual { v0 }, $TOPIC_FRAGMENT->$getter()$TOPIC
+            move-result-object v0
+            if-eqz v0, :original_back
+            iput-object v0, p0, $activity->topic:$TOPIC
+            :original_back
+            nop
+        """.trimIndent(),
+    )
 }
 
 private fun BytecodePatchContext.hardenQuickReplyState() {

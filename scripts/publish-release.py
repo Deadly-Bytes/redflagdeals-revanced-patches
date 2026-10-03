@@ -60,17 +60,29 @@ def main():
     if existing is None:
         gh("release", "create", tag, str(bundle), "--repo", repo, "--target", sha,
            "--title", tag, "--notes-file", str(notes), "--draft")
-    release = api(root + "/releases/tags/" + tag)
+    # The REST tag endpoint excludes drafts; gh resolves both drafts and releases.
+    release_id = json.loads(gh("release", "view", tag, "--repo", repo,
+                               "--json", "databaseId"))["databaseId"]
+    release_path = root + "/releases/" + str(release_id)
+    release = api(release_path)
+    if release["draft"] and release["target_commitish"] != sha:
+        raise ValueError("Existing draft does not target this source commit")
     asset = next((item for item in release["assets"] if item["name"] == name), None)
     if asset is None and release["draft"]:
         gh("release", "upload", tag, str(bundle), "--repo", repo)
-        release = api(root + "/releases/tags/" + tag)
+        release = api(release_path)
         asset = next(item for item in release["assets"] if item["name"] == name)
     if asset is None or asset.get("digest") != digest:
         raise ValueError("Published asset checksum differs; refusing to replace it")
     if release["draft"]:
         gh("release", "edit", tag, "--repo", repo, "--draft=false")
-        release = api(root + "/releases/tags/" + tag)
+        release = api(release_path)
+    if release["draft"] or not release["published_at"]:
+        raise ValueError("Release publication is not confirmed")
+    # Draft download URLs use an untagged placeholder; obtain the public URL afresh.
+    asset = next(item for item in release["assets"] if item["name"] == name)
+    if asset.get("digest") != digest:
+        raise ValueError("Published asset checksum differs after publication")
 
     # An old tag rebuild must not roll Manager back after a newer version merges.
     properties = api(root + "/contents/gradle.properties?ref=main")

@@ -50,16 +50,27 @@ class PublishReleaseTest(unittest.TestCase):
                 patch.object(sys, "argv", [str(SCRIPT)]):
             PUBLISH_RELEASE.main()
 
-    def release(self, digest=None):
+    def release(self, digest=None, draft=False, url=None, target="source-sha"):
         return {
-            "draft": False,
+            "draft": draft,
+            "target_commitish": target,
             "published_at": "2026-10-03T12:00:00Z",
             "assets": [{
                 "name": self.bundle.name,
                 "digest": self.digest if digest is None else digest,
-                "browser_download_url": "https://example.invalid/" + self.bundle.name,
+                "browser_download_url": url or "https://example.invalid/" + self.bundle.name,
             }],
         }
+
+    def gh_for_release(self, releases="[]", release_id=42):
+        def gh(*args):
+            if args[:2] == ("release", "list"):
+                return releases
+            if args[:2] == ("release", "view"):
+                return json.dumps({"databaseId": release_id})
+            return ""
+
+        return Mock(side_effect=gh)
 
     @staticmethod
     def content(value, sha="content-sha"):
@@ -96,12 +107,12 @@ class PublishReleaseTest(unittest.TestCase):
                 writes.append((path, payload))
             if path.endswith("/git/matching-refs/tags/v1.1.0"):
                 return []
-            if path.endswith("/releases/tags/v1.1.0"):
+            if path.endswith("/releases/42"):
                 return self.release("sha256:not-the-bundle")
             self.fail("unexpected API call: " + path)
 
         with self.assertRaisesRegex(ValueError, "checksum differs"):
-            self.run_main(api, Mock(return_value="[]"))
+            self.run_main(api, self.gh_for_release())
 
         self.assertEqual([], writes)
 
@@ -120,7 +131,7 @@ class PublishReleaseTest(unittest.TestCase):
                 return {"sha": "updated"}
             if path.endswith("/git/matching-refs/tags/v1.1.0"):
                 return []
-            if path.endswith("/releases/tags/v1.1.0"):
+            if path.endswith("/releases/42"):
                 return self.release()
             if path.endswith("/contents/gradle.properties?ref=main"):
                 return self.content("version = 1.1.0\n", "properties-sha")
@@ -128,7 +139,7 @@ class PublishReleaseTest(unittest.TestCase):
                 return self.content(source, "source-sha")
             self.fail("unexpected API call: " + path)
 
-        self.run_main(api, Mock(return_value="[]"))
+        self.run_main(api, self.gh_for_release())
 
         self.assertEqual(1, len(writes))
         path, payload = writes[0]
@@ -150,14 +161,97 @@ class PublishReleaseTest(unittest.TestCase):
                 return {"sha": "updated"}
             if path.endswith("/git/matching-refs/tags/v1.1.0"):
                 return []
-            if path.endswith("/releases/tags/v1.1.0"):
+            if path.endswith("/releases/42"):
                 return self.release()
             if path.endswith("/contents/gradle.properties?ref=main"):
                 return self.content("version = 1.2.0\n", "properties-sha")
             self.fail("unexpected API call: " + path)
 
-        self.run_main(api, Mock(return_value="[]"))
+        self.run_main(api, self.gh_for_release())
 
+        self.assertEqual([], writes)
+
+    def test_created_draft_publishes_and_uses_final_asset_url(self):
+        writes = []
+        draft_url = "https://example.invalid/drafts/asset.rvp"
+        final_url = "https://example.invalid/releases/v1.1.0/asset.rvp"
+        source = json.dumps({
+            "download_url": "https://example.invalid/old.rvp",
+            "created_at": "2026-01-01T00:00:00",
+            "description": "RedFlagDeals Forums compatibility patches",
+            "version": "1.0.0",
+        }, indent=2) + "\n"
+        releases = [
+            self.release(draft=True, url=draft_url),
+            self.release(draft=False, url=final_url),
+        ]
+
+        def api(path, payload=None):
+            if payload is not None:
+                writes.append((path, payload))
+                return {"sha": "updated"}
+            if path.endswith("/git/matching-refs/tags/v1.1.0"):
+                return []
+            if path.endswith("/releases/42"):
+                return releases.pop(0)
+            if path.endswith("/contents/gradle.properties?ref=main"):
+                return self.content("version = 1.1.0\n", "properties-sha")
+            if path.endswith("/contents/source.json?ref=main"):
+                return self.content(source, "source-sha")
+            self.fail("unexpected API call: " + path)
+
+        gh = self.gh_for_release()
+        self.run_main(api, gh)
+
+        calls = [call.args[:2] for call in gh.call_args_list]
+        self.assertIn(("release", "create"), calls)
+        self.assertIn(("release", "edit"), calls)
+        descriptor = json.loads(base64.b64decode(writes[0][1]["content"]))
+        self.assertEqual(final_url, descriptor["download_url"])
+
+    def test_resumed_matching_draft_is_published_without_creating_another_release(self):
+        releases = [
+            self.release(draft=True),
+            self.release(draft=False),
+        ]
+
+        def api(path, payload=None):
+            if payload is not None:
+                self.fail("source should remain unchanged when main is newer")
+            if path.endswith("/git/matching-refs/tags/v1.1.0"):
+                return []
+            if path.endswith("/releases/42"):
+                return releases.pop(0)
+            if path.endswith("/contents/gradle.properties?ref=main"):
+                return self.content("version = 1.2.0\n", "properties-sha")
+            self.fail("unexpected API call: " + path)
+
+        gh = self.gh_for_release(json.dumps([{"tagName": self.TAG, "isDraft": True}]))
+        self.run_main(api, gh)
+
+        calls = [call.args[:2] for call in gh.call_args_list]
+        self.assertNotIn(("release", "create"), calls)
+        self.assertIn(("release", "edit"), calls)
+
+    def test_draft_for_another_commit_refuses_before_publication(self):
+        writes = []
+
+        def api(path, payload=None):
+            if payload is not None:
+                writes.append((path, payload))
+            if path.endswith("/git/matching-refs/tags/v1.1.0"):
+                return []
+            if path.endswith("/releases/42"):
+                return self.release(draft=True, target="other-sha")
+            self.fail("unexpected API call: " + path)
+
+        gh = self.gh_for_release(json.dumps([{"tagName": self.TAG, "isDraft": True}]))
+        with self.assertRaisesRegex(ValueError, "Existing draft does not target"):
+            self.run_main(api, gh)
+
+        calls = [call.args[:2] for call in gh.call_args_list]
+        self.assertNotIn(("release", "upload"), calls)
+        self.assertNotIn(("release", "edit"), calls)
         self.assertEqual([], writes)
 
 

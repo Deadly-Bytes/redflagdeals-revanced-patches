@@ -25,7 +25,7 @@ private const val PROGRESS_HOLDER_CREATE =
 @Suppress("unused")
 val fixRedFlagDealsForumsPatch = bytecodePatch(
     name = "Fix RedFlagDeals Forums",
-    description = "Fixes authentication, topic permissions, exact-topic refresh, and pagination stability.",
+    description = "Fixes authentication, topic refresh, unread-state return, and pagination; adds thumbs-down to replies.",
 ) {
     compatibleWith("com.ypg.rfdforums"("1.11.7"))
 
@@ -34,6 +34,7 @@ val fixRedFlagDealsForumsPatch = bytecodePatch(
     apply {
         applyAuthenticationFixes()
         applyTopicFixes()
+        applyReplyVoting()
 
         val immutableMatches = classDefs.asSequence()
             .flatMap { it.methods.asSequence() }

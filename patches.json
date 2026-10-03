@@ -1,7 +1,7 @@
 [
   {
     "name": "Fix RedFlagDeals Forums",
-    "description": "Fixes authentication, topic permissions, exact-topic refresh, and pagination stability.",
+    "description": "Fixes authentication, topic refresh, unread-state return, and pagination; adds thumbs-down to replies.",
     "use": true,
     "dependencies": [],
     "compatiblePackages": {

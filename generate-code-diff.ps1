@@ -65,6 +65,10 @@ $targets = @(
     'com/ypg/rfdforums/sections/topic/TopicFragment.smali',
     'com/ypg/rfdforums/sections/topic/TopicFragment$onRefresh$1.smali',
     'com/ypg/rfdforums/sections/topics/TopicListAdapter.smali',
+    'com/ypg/rfdforums/sections/topic/TopicActivity.smali',
+    'com/ypg/rfdforums/databinding/PostItemBindingImpl.smali',
+    'app/revanced/extension/redflagdeals/ReplyVoting.smali',
+    'app/revanced/extension/redflagdeals/ReplyVoting$1.smali',
     'app/revanced/extension/redflagdeals/Diagnostics.smali'
 )
 $stockMap = Get-TargetSmaliMap $stockDecoded $targets

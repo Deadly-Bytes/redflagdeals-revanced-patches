@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.1 — 2026-10-04
+
+- Restore blue unread dots by adding a unique query parameter to the exact forum topic-list GET request, avoiding shared cached responses with incorrect `has_new_post` values.
+- Preserve the server's read state and the existing last-page/Back model synchronization.
+- Add 31 helper contract checks and decoded request-hook verification.
+
+Full stock-APK patch/decode/signature/alignment checks and altered-input rejection passed. Android 14 emulator tests restored unread flags from 0/15 to 14/15, confirmed page-1 retention and last-page clearing, retained read state after refresh/cold relaunch, and observed a dot return when a new reply arrived. Physical-device testing remains pending.
+
 ## 1.1.0 — 2026-10-03
 
 - Add thumbs-down controls to individual replies using the app's native voting and net-score handling.

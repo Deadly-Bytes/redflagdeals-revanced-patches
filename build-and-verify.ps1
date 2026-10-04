@@ -137,6 +137,17 @@ $topicListAdapter = Get-SingleDecodedClass 'TopicListAdapter.smali'
 $diagnostics = Get-SingleDecodedClass 'Diagnostics.smali'
 $replyBinding = Get-SingleDecodedClass 'PostItemBindingImpl.smali'
 $replyVoting = Get-SingleDecodedClass 'ReplyVoting.smali'
+$topicListRequests = Get-SingleDecodedClass 'TopicListRequests.smali'
+
+Assert-Contains $topicListRequests '"rfd_unread_nonce"'
+Assert-Contains $topicListRequests '"/api/topics"'
+Assert-Contains $topicListRequests '"forums.redflagdeals.com"'
+$requestMethod = [regex]::Match((Get-Content -LiteralPath $yidAdapter -Raw), '(?s)\.method public request\(Lcom/ypg/rfdapilib/api/ApiRequest;Lcom/ypg/rfdapilib/api/ApiResponseListener;\)V.*?\.end method').Value
+$unreadHook = 'invoke-static/range \{p1 \.\. p1\}, Lapp/revanced/extension/redflagdeals/TopicListRequests;->bypassSharedCache\(Ljava/lang/Object;\)V'
+if ([regex]::Matches($requestMethod, $unreadHook).Count -ne 1 -or
+    $requestMethod -notmatch ('(?s)\.(?:registers 5|locals 2)\s+' + $unreadHook)) {
+    throw 'Topic-list cache bypass must run once at request entry using the high-register-safe invoke form.'
+}
 
 Assert-Contains $replyBinding 'ReplyVoting;->bind(Ljava/lang/Object;)V'
 Assert-Contains $replyVoting '"onVoteDown"'

@@ -1,59 +1,38 @@
-# RedFlagDeals Forums ReVanced patches
+# RedFlagDeals Forums ReVanced patch
 
-An unofficial compatibility patch for the discontinued RedFlagDeals Forums Android app.
+This is an unofficial ReVanced patch for the discontinued RedFlagDeals Forums Android app. It updates the app so it continues to work with the current forum and adds features available on the website.
 
-This project is not affiliated with, endorsed by, or supported by RedFlagDeals, Yellow Pages Group, or the ReVanced project. It distributes patch source and ReVanced patch bundles only—never the proprietary RedFlagDeals APK.
+It patches RedFlagDeals Forums **version 1.11.7**. The original APK is not included; obtain your own copy and patch it with ReVanced Manager.
 
-## Supported app
+## What it adds
 
-- Package: `com.ypg.rfdforums`
-- Version: `1.11.7`
-- Required stock APK SHA-256: `e826029890e2c4e5193b75381061a353953a9e4c92e7601498cc01e2c997ad1d`
-- Required stock APK size: `6511556` bytes
+- Thumbs-down voting on individual replies, including the correct net score and selected state.
+- Working blue unread dots in topic lists.
+- Correct unread state after opening a thread, visiting its last page, and returning to the list.
+- Reliable login and reply permissions with the current forum API.
+- Stable scrolling and pagination in long threads.
 
-Fingerprints are deliberately strict. Any package, version, or bytecode mismatch aborts patching.
-
-## What the patch changes
-
-`Fix RedFlagDeals Forums` makes these focused repairs:
-
-- Preserves the current YID/phpBB authentication tuple and accepts the current server's SID format.
-- Stops non-replyable topics from being treated as an automatic logout, refreshes the exact topic before showing reply controls, and keeps locked topics readable.
-- Creates a fresh pagination progress holder instead of reusing the cached holder that caused scrolling crashes.
-- Returns the current thread model to the list on Back after a topic refresh, so the blue unread dot can clear after reaching the last page. The dot follows the server's `has_new_post` flag; it is not a separate local history of threads never opened.
-- Adds a cache-busting nonce only to the exact HTTPS `forums.redflagdeals.com/api/topics` GET request. Cookies, headers, request bodies, and all other URLs remain unchanged, allowing the server to return current `has_new_post` flags.
-- Adds a thumbs-down button beside thumbs-up on individual replies. It uses the app's native voting handler for login, permissions, undo, in-flight request protection, score updates, and error rollback. The selected icon follows the same vote state as the score, and recycled rows resolve their current reply when clicked.
-
-The reply buttons use the native net score (upvotes minus downvotes), including negative totals. The selected icon matches the stock upvote icon size; the native brief bounce animation is preserved. Thread-first-post voting remains on the original controls. Server login and voting restrictions still apply.
-
-Reply controls passed Android 14 emulator checks in light/dark themes and repeated scrolling. One user-authorized live downvote changed the score from `+0` to `-1` and persisted after refresh. Live undo/error rollback and physical-device testing remain unverified.
-
-Safe runtime diagnostics use the `RFDSession` log tag. They report endpoint names, authentication-component presence, topic IDs, and permission flags. They never log cookie values, credentials, IP addresses, account names, or reply text.
+The patch keeps the forum's server-side read state and uses the app's normal login and voting rules. It does not add a separate account or send your data anywhere else.
 
 ## Install with ReVanced Manager
 
-### Add this repository by URL
+1. Open ReVanced Manager and add this patch source:
 
-In ReVanced Manager, open the **Patches** tab, choose the add-source option, select **Enter URL**, and paste:
+   `https://raw.githubusercontent.com/Deadly-Bytes/redflagdeals-revanced-patches/main/source.json`
 
-`https://raw.githubusercontent.com/Deadly-Bytes/redflagdeals-revanced-patches/main/source.json`
+2. Choose your unmodified RedFlagDeals Forums **1.11.7** APK.
+3. Select **Fix RedFlagDeals Forums** and patch the APK.
+4. Install the patched APK.
 
-This root-level source descriptor tells ReVanced Manager where to download the released `.rvp` bundle. The repository also publishes `patches.json`, a catalogue describing the patch name, supported package, and supported app version; that catalogue is not the URL to enter in Manager's add-source dialog.
+You can also download the `.rvp` file from the [Releases](https://github.com/Deadly-Bytes/redflagdeals-revanced-patches/releases) page and add it to ReVanced Manager as a local patch bundle.
 
-Then select a legally obtained, unmodified RedFlagDeals Forums `1.11.7` APK from storage, enable `Fix RedFlagDeals Forums`, patch, and install the result.
+### Installing beside the official app
 
-### Add a local bundle instead
+Android normally treats the patched APK as a different signature, so it may not install as an update to the official app. If Android asks you to remove the official app, back up anything important first: uninstalling an app removes its local data, including saved alerts. Installing with the same signing key later allows updates without clearing that data.
 
-1. Download the `.rvp` patch bundle from this repository's Releases page.
-2. Add the downloaded bundle as a local patch bundle in ReVanced Manager.
-3. Select a legally obtained, unmodified RedFlagDeals Forums `1.11.7` APK from storage.
-4. Enable `Fix RedFlagDeals Forums`, patch, and install the result.
+## Patch with the command line
 
-An existing installation signed with a different certificate must be removed before Android will accept the newly patched APK. Removing an app also removes its local app data.
-
-## Patch with ReVanced CLI
-
-With ReVanced CLI `6.0.0` and the released bundle in the current directory:
+Download the latest `.rvp` from Releases and use ReVanced CLI with an unmodified 1.11.7 APK:
 
 ```shell
 java -jar revanced-cli-6.0.0-all.jar patch \
@@ -63,46 +42,8 @@ java -jar revanced-cli-6.0.0-all.jar patch \
   RedFlagDeals-Forums-v1.11.7.apk
 ```
 
-Do not distribute the generated APK.
+Do not distribute the generated APK. RedFlagDeals, Yellow Pages Group, and ReVanced are not affiliated with this project.
 
-## Build and verify from source
+## Source and license
 
-Prerequisites:
-
-- Windows PowerShell
-- Java `21.0.6`
-- Android SDK Build-Tools `36.0.0`
-- The exact stock APK described above
-
-```powershell
-.\build-and-verify.ps1 -StockApk 'C:\path\to\RedFlagDeals-Forums-v1.11.7.apk'
-```
-
-The script checksum-downloads pinned tools, verifies the stock APK before and after patching, builds the `.rvp`, requires an explicit successful patch result, decodes and inspects transformed bytecode, verifies the APK signature, and checks 16 KiB page alignment. Local APKs, signing keys, downloaded tools, and generated artifacts are ignored by Git.
-
-All dependency versions, source commits, and download hashes are recorded in `toolchain-lock.json`. Local integration checks also reject altered bytecode and verify the generated APK before installation.
-
-## Validation status
-
-The published 1.0.0 baseline passed Android 14 emulator testing across authenticated login, at least 22 distinct topics, locked and replyable topic states, refresh, pagination, deep scrolling, non-submitting reply composition, and force-stop/relaunch. No missing-auth request, verifier failure, pagination-holder crash, or automatic logout occurred.
-
-No reply was posted. One explicitly requested downvote was submitted and persisted; physical-device testing remains outstanding.
-
-## Upstream basis and license
-
-The project is based on the official ReVanced patches template and Patcher 22 toolchain. The vendored Gradle build plugin is derived from the official ReVanced plugin at commit `7bdf4324` and is included so builds do not require private GitHub Packages credentials.
-
-Source code is licensed under GPL-3.0. See `LICENSE`. ReVanced trademarks and project assets belong to their respective owners.
-
-Official references:
-
-- https://github.com/ReVanced/revanced-documentation
-- https://github.com/ReVanced/revanced-patches-template
-- https://github.com/ReVanced/revanced-patcher/tree/v22.0.0/docs
-- https://github.com/ReVanced/revanced-cli/releases/tag/v6.0.0
-
-## Publishing a release
-
-Bump `version` in `gradle.properties`, add `releases/<version>.md`, and update the changelog in a reviewed pull request. CI builds the bundle. Merging a version change to `main` triggers the release workflow, which repeats the build, creates `v<version>` at that commit, and publishes only the `.rvp` asset. Tag pushes and manual runs are also supported; tag and source versions must match.
-
-After verifying the published asset checksum, the workflow updates `source.json` on `main` so ReVanced Manager can discover the new bundle. A failed publication leaves the previous Manager URL intact. Published assets and tags are never overwritten. Local stock-APK integration checks remain required before release because the proprietary APK is not uploaded to GitHub.
+The source is available in this repository under GPL-3.0. The project distributes patch source and `.rvp` bundles only; it does not distribute the proprietary RedFlagDeals APK.

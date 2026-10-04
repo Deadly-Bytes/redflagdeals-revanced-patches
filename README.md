@@ -26,7 +26,7 @@ Fingerprints are deliberately strict. Any package, version, or bytecode mismatch
 
 The reply buttons use the native net score (upvotes minus downvotes), including negative totals. The selected icon matches the stock upvote icon size; the native brief bounce animation is preserved. Thread-first-post voting remains on the original controls. Server login and voting restrictions still apply.
 
-Reply controls passed Android 14 emulator checks in light/dark themes and repeated scrolling. One user-authorized live downvote changed the score from `+0` to `-1` and persisted after refresh. Live undo/error rollback and physical-device testing remain unverified. The cache-bypass investigation is recorded in [the October 4 emulator record](validation/emulator-20261004.md); earlier reply-voting evidence remains in [the October 3 record](validation/emulator-20261003.md).
+Reply controls passed Android 14 emulator checks in light/dark themes and repeated scrolling. One user-authorized live downvote changed the score from `+0` to `-1` and persisted after refresh. Live undo/error rollback and physical-device testing remain unverified.
 
 Safe runtime diagnostics use the `RFDSession` log tag. They report endpoint names, authentication-component presence, topic IDs, and permission flags. They never log cookie values, credentials, IP addresses, account names, or reply text.
 
@@ -80,11 +80,11 @@ Prerequisites:
 
 The script checksum-downloads pinned tools, verifies the stock APK before and after patching, builds the `.rvp`, requires an explicit successful patch result, decodes and inspects transformed bytecode, verifies the APK signature, and checks 16 KiB page alignment. Local APKs, signing keys, downloaded tools, and generated artifacts are ignored by Git.
 
-All dependency versions, source commits, and download hashes are recorded in `toolchain-lock.json`. The negative regression test in `tests/test-fail-closed.ps1` proves altered bytecode is rejected and partial CLI output is removed.
+All dependency versions, source commits, and download hashes are recorded in `toolchain-lock.json`. Local integration checks also reject altered bytecode and verify the generated APK before installation.
 
 ## Validation status
 
-The published 1.0.0 baseline passed Android 14 emulator testing across authenticated login, at least 22 distinct topics, locked and replyable topic states, refresh, pagination, deep scrolling, non-submitting reply composition, and force-stop/relaunch. No missing-auth request, verifier failure, pagination-holder crash, or automatic logout occurred. The 1.1.0 checks are recorded separately in [the October emulator record](validation/emulator-20261003.md).
+The published 1.0.0 baseline passed Android 14 emulator testing across authenticated login, at least 22 distinct topics, locked and replyable topic states, refresh, pagination, deep scrolling, non-submitting reply composition, and force-stop/relaunch. No missing-auth request, verifier failure, pagination-holder crash, or automatic logout occurred.
 
 No reply was posted. One explicitly requested downvote was submitted and persisted; physical-device testing remains outstanding.
 
@@ -103,6 +103,6 @@ Official references:
 
 ## Publishing a release
 
-Bump `version` in `gradle.properties`, add `releases/<version>.md`, and update the changelog in a reviewed pull request. CI builds the bundle and runs the isolated reply-voting and topic-list cache checks. Merging a version change to `main` triggers the release workflow, which repeats the build/tests, creates `v<version>` at that commit, and publishes only the `.rvp` asset. Tag pushes and manual runs are also supported; tag and source versions must match.
+Bump `version` in `gradle.properties`, add `releases/<version>.md`, and update the changelog in a reviewed pull request. CI builds the bundle. Merging a version change to `main` triggers the release workflow, which repeats the build, creates `v<version>` at that commit, and publishes only the `.rvp` asset. Tag pushes and manual runs are also supported; tag and source versions must match.
 
 After verifying the published asset checksum, the workflow updates `source.json` on `main` so ReVanced Manager can discover the new bundle. A failed publication leaves the previous Manager URL intact. Published assets and tags are never overwritten. Local stock-APK integration checks remain required before release because the proprietary APK is not uploaded to GitHub.

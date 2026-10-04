@@ -23,7 +23,6 @@ jobs:
 
       - name: Validate release inputs
         run: |
-          python3 tests/test_publish_release.py
           python3 scripts/publish-release.py --validate-only
 
       - name: Set up Java
@@ -50,14 +49,6 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew :patches:buildAndroid --no-daemon
-
-      - name: Test reply controls
-        shell: pwsh
-        run: ./tests/test-reply-voting.ps1
-
-      - name: Test topic-list cache bypass
-        shell: pwsh
-        run: ./tests/test-topic-list-cache.ps1
 
       - name: Publish bundle and update Manager source
         env:

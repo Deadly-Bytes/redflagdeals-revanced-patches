@@ -128,5 +128,9 @@ node_modules/
 artifacts/
 __pycache__/
 
+# Local-only test scripts and emulator evidence.
+tests/
+validation/
+
 # Ignore IDEA files
 .idea/

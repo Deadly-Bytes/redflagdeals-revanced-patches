@@ -69,6 +69,7 @@ $targets = @(
     'com/ypg/rfdforums/databinding/PostItemBindingImpl.smali',
     'app/revanced/extension/redflagdeals/ReplyVoting.smali',
     'app/revanced/extension/redflagdeals/ReplyVoting$1.smali',
+    'app/revanced/extension/redflagdeals/TopicListRequests.smali',
     'app/revanced/extension/redflagdeals/Diagnostics.smali'
 )
 $stockMap = Get-TargetSmaliMap $stockDecoded $targets

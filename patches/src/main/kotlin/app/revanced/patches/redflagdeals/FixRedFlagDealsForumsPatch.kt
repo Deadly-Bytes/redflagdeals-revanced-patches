@@ -25,13 +25,15 @@ private const val PROGRESS_HOLDER_CREATE =
 @Suppress("unused")
 val fixRedFlagDealsForumsPatch = bytecodePatch(
     name = "Fix RedFlagDeals Forums",
-    description = "Fixes authentication, topic refresh, unread-state return, and pagination; adds thumbs-down to replies.",
+    description = "Fixes authentication, topic refresh, unread indicators, and pagination; adds thumbs-down to replies.",
 ) {
     compatibleWith("com.ypg.rfdforums"("1.11.7"))
 
     extendWith("extensions/rfd-diagnostics.rve")
 
     apply {
+        // Fingerprint the stock request before authentication diagnostics add instructions.
+        applyUnreadFix()
         applyAuthenticationFixes()
         applyTopicFixes()
         applyReplyVoting()

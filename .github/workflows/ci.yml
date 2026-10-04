@@ -46,6 +46,10 @@ jobs:
         shell: pwsh
         run: ./tests/test-reply-voting.ps1
 
+      - name: Test topic-list cache bypass
+        shell: pwsh
+        run: ./tests/test-topic-list-cache.ps1
+
       - name: Upload patch bundle
         uses: actions/upload-artifact@v4
         with:
